@@ -10,11 +10,10 @@ Běžně se předávají tyto výstupy:
 2. PDF soubor s vlastním GP - zde se kromě interního elektronického podpisu připojuje i interní kvalifikované časové razítko (interní znamená, že je součást souboru PDF)
 3. ZPMZ (záznam podrobného měření změn) - sada několika souborů, která se opratřuje elektronickým podpisem i časovým razítkem v externím souboru
 
-K podepsání prvních dvou položek (PDF souborů) se často používá program JSignPDF (http://jsignpdf.sourceforge.net/), který je multiplatformní (napsán v jazyku JAVA) a zvládá přikládat jak elektronický podpis, tak i časové razítko.
+K podepsání prvních dvou položek (PDF souborů) se často používá program [JSignPDF](http://jsignpdf.sourceforge.net/), který je multiplatformní (napsán v jazyku JAVA) a zvládá přikládat jak elektronický podpis, tak i časové razítko.
 
 Problém je třetí položka v seznamu výše - ZPMZ. K tomu zase moc programů neexistuje. ČÚZK k tomuto účelu vyvinul jednoduchý program nazvaný KDirSign. Najdeteho na stránkách úřadu:
-www.cuzk.cz | Je dobré vědět | Životní situace | Ověřování výsledků zeměměřických činností v elektronické podobě
-(https://www.cuzk.cz/Je-dobre-vedet/Zivotni-situace/Overovani-vysledku-zememerickych-cinnosti-v-elektr.aspx)
+[www.cuzk.cz | Je dobré vědět | Životní situace | Ověřování výsledků zeměměřických činností v elektronické podobě](https://www.cuzk.cz/Je-dobre-vedet/Zivotni-situace/Overovani-vysledku-zememerickych-cinnosti-v-elektr.aspx)
 
 První verze byly psány v jazyce JAVA a fungovaly také na více platformách. Poslední verze z roku 2019 pak byla přepsána do jazyku C# a funguje patrně pouze na Windows. Protože používá:
 * Windows Presentation Framework  (projekt MONO WFP nepodporuje - viz: https://www.mono-project.com/docs/gui/wpf/)
@@ -97,23 +96,25 @@ Např.:
 ```
 
 7. Vytvoř externí soubor s elektronickým podpisem
+```
 openssl smime -sign -binary -in file -signer certificate.pem -inkey key.pem -outform DER -out file.p7s
+```
+* certificate.pem    ... veřejný certifikát podepsaný certifikační autoritou ve formátu PEM (textový formát kódovaný pomocí Base64)
+* key.pem            ... privátní klíč k certifikátu ve formátu PEM
 
-certificate.pem    ... veřejný certifikát podepsaný certifikační autoritou ve formátu PEM (textový formát kódovaný pomocí Base64)
-key.pem            ... privátní klíč k certifikátu ve formátu PEM
-
-openssl zvládá číst více formátu. Můžete vyzkoušet jiné formáty zabezpečené heslem.
+Openssl zvládá číst více formátu. Můžete vyzkoušet jiné formáty zabezpečené heslem.
 
 8. Přilož kvalifikované časové razítko   
 * V první fázi vytvoř žádost o časové razítko:
+```
 openssl ts -query -data "file.p7s" -cert -sha256 -out request.tsq
+```
 
 * Vdruhé fázi odešli žádost na certifikančí autoritu vydávající časová razítka  
 Použij wget / curl programy. Je to v podstatě jen o adrese, přihlašovacích údajích, a přiložených datech.
-
+```
 curl -k -u "<TSA přihlašovací údaje>" -H "Content-Type: application/timestamp-query" --data-binary @"request.tsq" -X POST "${TSA_URL}"  > "Overeni_UOZI.txt.p7s.tsr"
 
+# Napr. pro testovací CA u PostSignum:
 curl -k -u demoTSA:demoTSA2010 -H "Content-Type: application/timestamp-query" --data-binary @request.tsq -X POST "https://www3.postsignum.cz/DEMOTSA/TSS_user/"  >file.tsr
-
-
-
+```
